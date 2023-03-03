@@ -1,5 +1,5 @@
 resource "aws_key_pair" "dove-key" {
-  key_name   = "dovekey"
+  key_name   = "ahmed-dovekey"
   public_key = file(var.pub_key)
 }
 
@@ -12,6 +12,24 @@ resource "aws_instance" "dove-web" {
   tags = {
     Name = "my-dove"
   }
+
+    provisioner "file" {
+    source      = "web.sh"
+    destination = "/tmp/web.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod u+x /tmp/web.sh",
+      "sudo /tmp/web.sh"
+    ]
+  }
+  connection {
+    user        = var.user
+    private_key = file(var.priv_key)
+    host        = self.public_ip
+  }
+
 }
 
 resource "aws_ebs_volume" "vol_4_dove" {
@@ -27,6 +45,7 @@ resource "aws_volume_attachment" "atch_vol_dove" {
   volume_id   = aws_ebs_volume.vol_4_dove.id
   instance_id = aws_instance.dove-web.id
 }
+
 
 output "PublicIP" {
   value = aws_instance.dove-web.public_ip
